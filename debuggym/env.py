@@ -89,18 +89,23 @@ class DebugGymEnv:
         current_passed = sum(results)
         total = len(results)
 
-        improvement = (current_passed - prev_passed) / total
-
         # ===== REWARD SYSTEM =====
 
-        reward += improvement * 0.7
+        # Base: percentage of tests passing right now
+        base_reward = current_passed / total if total > 0 else 0.0
+
+        # Improvement bonus over last step
+        improvement_bonus = max(0.0, (current_passed - prev_passed) / total) * 0.3
+
+        # Efficiency bonus - reward finishing fast
+        efficiency_bonus = max(0.0, 1.0 - (0.04 * self.step_count))
+
+        reward += base_reward * 0.5 + improvement_bonus + efficiency_bonus * 0.2
 
         if error:
             reward -= 0.1
 
-        reward -= 0.04 * self.step_count
         reward -= penalty
-
         reward = max(0.0, min(1.0, round(reward, 2)))
 
         self.prev_results = results

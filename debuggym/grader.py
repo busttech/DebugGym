@@ -1,4 +1,5 @@
 import ast
+import json as _json
 
 
 def check_syntax(code):
@@ -18,12 +19,13 @@ def run_tests(code, tests):
         return [False] * len(tests), syntax_error
 
     try:
+        global_env = {"json": _json}
         local_env = {}
-        exec(code, {}, local_env)
+        exec(code, global_env, local_env)
 
         for expr, expected in tests:
             try:
-                result = eval(expr, {}, local_env)
+                result = eval(expr, global_env, local_env)
                 results.append(result == expected)
             except:
                 results.append(False)
