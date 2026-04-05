@@ -1,0 +1,9 @@
+name: debuggym
+description: Debugging RL environment
+entry_point: debuggym.env:DebugGymEnv
+
+tasks:
+  - easy
+  - medium
+  - hard
+  
