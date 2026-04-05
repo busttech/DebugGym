@@ -1,9 +1,16 @@
-name: debuggym
-description: Debugging RL environment
-entry_point: debuggym.env:DebugGymEnv
+name: debuggym-env
+description: AI debugging and code reasoning environment
+version: 1.0.0
+
+entrypoint: debuggym.env:DebugGymEnv
+
+observation_type: DebugObservation
+action_type: DebugAction
+reward_type: DebugReward
 
 tasks:
   - easy
   - medium
   - hard
-  
+  - expert
+  - api_debug

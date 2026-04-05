@@ -1,41 +1,69 @@
-print("setup started")
-
 import os
 import json
 from openai import OpenAI
-
+from dotenv import load_dotenv
 from debuggym.env import DebugGymEnv
 from debuggym.models import DebugAction
+load_dotenv()
 
-# ENV VARIABLES
+# ================= CONFIG =================
+
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")  # safer than 72B
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-TASKS = ["easy", "medium", "hard"]
+TASKS = ["easy", "medium", "hard", "expert", "api_debug"]
 MAX_STEPS = 8
 
 
-def get_action_from_llm(observation):
+# ================= HELPERS =================
+
+def safe_parse_json(text):
+    try:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        return json.loads(text[start:end])
+    except:
+        return None
+
+
+def fallback_action(obs):
+    if obs.error_message:
+        return DebugAction(
+            action_type="edit",
+            line_number=0,
+            new_code="# fix error"
+        )
+
+    if obs.tests_passed < obs.tests_total:
+        return DebugAction(
+            action_type="suggest_fix",
+            new_code="# improve logic"
+        )
+
+    return DebugAction(action_type="run")
+
+
+def get_action_from_llm(obs):
     prompt = f"""
-Fix the following Python code.
+Fix the Python code.
 
 Code:
-{observation.code}
+{obs.code}
 
 Error:
-{observation.error_message}
+{obs.error_message}
 
 Tests:
-{observation.test_results}
+{obs.test_results}
 
 Return ONLY JSON:
 {{
  "action_type": "edit",
  "line_number": 0,
- "new_code": "return a + b"
+ "new_code": "..."
 }}
 """
 
@@ -44,16 +72,22 @@ Return ONLY JSON:
             model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
-            max_tokens=100
+            max_tokens=120
         )
 
-        text = response.choices[0].message.content
-        action_json = json.loads(text)
-        return DebugAction(**action_json)
+        text = response.choices[0].message.content or ""
+        parsed = safe_parse_json(text)
+
+        if parsed:
+            return DebugAction(**parsed)
 
     except:
-        return DebugAction(action_type="run")
+        pass
 
+    return fallback_action(obs)
+
+
+# ================= MAIN =================
 
 def run_task(task_name):
     env = DebugGymEnv(task_name=task_name)
@@ -61,37 +95,51 @@ def run_task(task_name):
 
     rewards = []
     success = False
+    step = 0
 
     print(f"[START] task={task_name} env=debuggym model={MODEL_NAME}")
 
-    for step in range(1, MAX_STEPS + 1):
+    try:
+        for step in range(1, MAX_STEPS + 1):
 
-        action = get_action_from_llm(obs)
+            action = get_action_from_llm(obs)
 
-        obs, reward, done, info = env.step(action)
+            obs, reward, done, _ = env.step(action)
 
-        rewards.append(f"{reward:.2f}")
+            rewards.append(reward)
 
-        error_msg = obs.error_message if obs.error_message else "null"
+            error_val = obs.error_message if obs.error_message else None
+            error_str = error_val if error_val else "null"
+
+            print(
+                f"[STEP] step={step} action={action.action_type} "
+                f"reward={reward:.2f} done={str(done).lower()} error={error_str}"
+            )
+
+            if done:
+                success = all(obs.test_results)
+                break
+
+    except Exception:
+        success = False
+
+    finally:
+        score = sum(rewards) / len(rewards) if rewards else 0.0
+        score = max(0.0, min(1.0, score))
+
+        rewards_str = ",".join(f"{r:.2f}" for r in rewards)
 
         print(
-            f"[STEP] step={step} action={action.action_type} "
-            f"reward={reward:.2f} done={str(done).lower()} error={error_msg}"
+            f"[END] success={str(success).lower()} "
+            f"steps={step} score={score:.2f} rewards={rewards_str}"
         )
 
-        if done:
-            success = all(obs.test_results)
-            break
-
-    score = sum(float(r) for r in rewards) / len(rewards)
-
-    print(
-        f"[END] success={str(success).lower()} "
-        f"steps={step} score={score:.2f} rewards={','.join(rewards)}"
-    )
+        try:
+            env.close()
+        except:
+            pass
 
 
 if __name__ == "__main__":
     for task in TASKS:
         run_task(task)
-        
