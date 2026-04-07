@@ -2,22 +2,9 @@
 
 > *Can an AI agent fix a broken production pipeline at 3am?*
 
-DebugGym is a **product---
-title: Debuggym
-emoji: ⚡
-colorFrom: green
-colorTo: yellow
-sdk: docker
-pinned: false
-license: mit
-short_description: Create a new Space Spaces are Git repositories that host app
----
-
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
-ion-grade OpenEnv environment** that simulates real-world CI/CD failure recovery. Instead of solving toy problems, agents must diagnose runtime crashes, fix broken business logic, handle malformed inputs, and recover from misconfigurations — the exact scenarios engineers face under pressure.
+This is a **production-grade OpenEnv environment** that simulates real-world CI/CD failure recovery. Instead of solving toy problems, agents must diagnose runtime crashes, fix broken business logic, handle malformed inputs, and recover from misconfigurations — the exact scenarios engineers face under pressure.
 
 ---
-
 ## Why DebugGym?
 
 Debugging accounts for **40–60% of engineering time** in production systems. Most AI benchmarks test code *generation* from scratch. DebugGym evaluates a missing dimension:
