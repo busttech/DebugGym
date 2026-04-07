@@ -4,22 +4,37 @@ from debuggym.grader import run_tests
 from debuggym.utils import sanitize_code, get_hint, format_error
 
 
+TASK_MAX_STEPS = {
+    "email_validation": 12,
+    "user_api": 12,
+    "payments": 18,
+    "config_loader": 18,
+    "nested_api": 18,
+    "json_schema_repair": 20,
+    "rate_limiter_audit": 20,
+}
+
+
 class DebugGymEnv:
 
     def __init__(self, task_name="email_validation"):
         self.task_name = task_name
-        self.max_steps = 12 if task_name == "email_validation" else 18
+        self.max_steps = TASK_MAX_STEPS.get(task_name, 18)
         self.code = ""
         self.tests = []
         self.step_count = 0
         self.prev_results = []
         self.last_action = None
+        self._episode_rewards = []
+        self._total_episodes = 0
 
     def reset(self):
         task = get_task(self.task_name)
         self.code = task["code"]
         self.tests = task["tests"]
         self.step_count = 0
+        self._episode_rewards = []
+        self._total_episodes += 1
 
         results, error = run_tests(self.code, self.tests)
         self.prev_results = results
@@ -93,7 +108,6 @@ class DebugGymEnv:
 
         base_reward = current_passed / total if total > 0 else 0.0
 
-        # smarter improvement logic (with regression penalty)
         improvement = current_passed - prev_passed
         if improvement > 0:
             improvement_bonus = (improvement / total) * 0.3
@@ -106,7 +120,6 @@ class DebugGymEnv:
 
         reward += base_reward * 0.5 + improvement_bonus + efficiency_bonus * 0.2
 
-        # extra reward for reasoning (judge bonus)
         if action.action_type == "explain_bug":
             reward += 0.05
 
@@ -116,9 +129,9 @@ class DebugGymEnv:
         reward -= penalty
         reward = max(0.0, min(1.0, round(reward, 2)))
 
+        self._episode_rewards.append(reward)
         self.prev_results = results
 
-        # ✅ FIXED DONE CONDITION (IMPORTANT)
         done = (sum(results) == total) or self.step_count >= self.max_steps
 
         logs = f"""
@@ -152,7 +165,11 @@ Progress: {current_passed}/{total}
             "step_count": self.step_count,
             "task_name": self.task_name,
             "tests_passed": int(sum(1 for r in self.prev_results if r == 1.0)),
-            "tests_total": len(self.tests)
+            "tests_total": len(self.tests),
+            "max_steps": self.max_steps,
+            "episode_avg_reward": round(
+                sum(self._episode_rewards) / len(self._episode_rewards), 4
+            ) if self._episode_rewards else 0.0
         }
 
     def close(self):
