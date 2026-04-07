@@ -1,54 +1,56 @@
 def get_task(task_name: str):
 
-    if task_name == "easy":
+    if task_name == "email_validation":
         return {
-            "name": "easy",
-            "code": "def calculate_discount(price, percent):\n    return price / (percent / 100)",
+            "name": "email_validation",
+            "code": "def get_domain(user):\n    return user['email'].split('@')[1]",
             "tests": [
-                ("calculate_discount(100, 10)", 10.0),
-                ("calculate_discount(200, 20)", 40.0),
+                ("get_domain({'email': 'test@gmail.com'})", "gmail.com"),
+                ("get_domain({'email': None})", "invalid"),
+                ("get_domain({})", "invalid"),
             ]
         }
 
-    elif task_name == "medium":
+    elif task_name == "user_api":
         return {
-            "name": "medium",
-            "code": "def parse_user_age(data):\n    return int(data['age'])",
+            "name": "user_api",
+            "code": "def parse_user(data):\n    return int(data['age'])",
             "tests": [
-                ("parse_user_age({'age': '25'})", 25),
-                ("parse_user_age({'age': 30})", 30),
+                ("parse_user({'age': '25'})", 25),
+                ("parse_user({'age': 30})", 30),
+                ("parse_user({})", 0),
             ]
         }
 
-    elif task_name == "hard":
+    elif task_name == "payments":
         return {
-            "name": "hard",
-            "code": "def process_transactions(transactions):\n    total = 0\n    failed = []\n    for t in transactions:\n        if t >= 0:\n            total += t\n        else:\n            failed.append(t)\n    return total, []",
+            "name": "payments",
+            "code": "def process(transactions):\n    total = 0\n    failed = []\n    for t in transactions:\n        if t > 0:\n            total += t\n    return total, []",
             "tests": [
-                ("process_transactions([100, -50, 200])", (300, [-50])),
-                ("process_transactions([0])", (0, [])),
+                ("process([100, -50, 200])", (300, [-50])),
+                ("process([0, -10])", (0, [-10])),
             ]
         }
 
-    elif task_name == "expert":
+    elif task_name == "config_loader":
         return {
-            "name": "expert",
-            "code": "import json\n\ndef load_config(config_str):\n    try:\n        config = json.loads(config_str)\n        return config[\"host\"], int(config[\"port\"])\n    except Exception:\n        return \"localhost\", 3000",
+            "name": "config_loader",
+            "code": "import json\n\ndef load(cfg):\n    data = json.loads(cfg)\n    return data['host'], int(data['port'])",
             "tests": [
-                ('load_config(\'{"host":"localhost","port":8080}\')', ("localhost", 8080)),
-                ('load_config(\'{"host":"prod.com","port":443}\')', ("prod.com", 443)),
-                ('load_config(\'{}\')', ("localhost", 3000)),
-                ('load_config(\'invalid\')', ("localhost", 3000)),
+                ('load(\'{"host":"localhost","port":8080}\')', ("localhost", 8080)),
+                ('load(\'{}\')', ("localhost", 3000)),
+                ('load(\'invalid\')', ("localhost", 3000)),
             ]
         }
 
-    elif task_name == "api_debug":
+    elif task_name == "nested_api":
         return {
-            "name": "api_debug",
-            "code": "def fetch_user(data):\n    return data[\"user\"][\"age\"]",
+            "name": "nested_api",
+            "code": "def get_age(data):\n    return data['user']['profile']['age']",
             "tests": [
-                ("fetch_user({'user': {'age': 25}})", 25),
-                ("fetch_user({'user': {'age': 0}})", 0),
+                ("get_age({'user': {'profile': {'age': 25}}})", 25),
+                ("get_age({'user': {}})", 0),
+                ("get_age({})", 0),
             ]
         }
 

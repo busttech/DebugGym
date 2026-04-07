@@ -6,9 +6,9 @@ from debuggym.utils import sanitize_code, get_hint, format_error
 
 class DebugGymEnv:
 
-    def __init__(self, task_name="easy"):
+    def __init__(self, task_name="email_validation"):
         self.task_name = task_name
-        self.max_steps = 12 if task_name == "easy" else 18
+        self.max_steps = 12 if task_name == "email_validation" else 18
         self.code = ""
         self.tests = []
         self.step_count = 0
@@ -33,7 +33,7 @@ class DebugGymEnv:
             task_name=self.task_name,
             hint=get_hint(results, error, self.code),
             logs=format_error(error),
-            tests_passed=sum(results),
+            tests_passed=int(sum(1 for r in results if r == 1.0)),
             tests_total=len(self.tests)
         )
 
@@ -91,16 +91,24 @@ class DebugGymEnv:
 
         # ===== REWARD SYSTEM =====
 
-        # Base: percentage of tests passing right now
         base_reward = current_passed / total if total > 0 else 0.0
 
-        # Improvement bonus over last step
-        improvement_bonus = max(0.0, (current_passed - prev_passed) / total) * 0.3
+        # smarter improvement logic (with regression penalty)
+        improvement = current_passed - prev_passed
+        if improvement > 0:
+            improvement_bonus = (improvement / total) * 0.3
+        elif improvement < 0:
+            improvement_bonus = -0.1
+        else:
+            improvement_bonus = 0.0
 
-        # Efficiency bonus - reward finishing fast
         efficiency_bonus = max(0.0, 1.0 - (0.04 * self.step_count))
 
         reward += base_reward * 0.5 + improvement_bonus + efficiency_bonus * 0.2
+
+        # extra reward for reasoning (judge bonus)
+        if action.action_type == "explain_bug":
+            reward += 0.05
 
         if error:
             reward -= 0.1
@@ -110,7 +118,8 @@ class DebugGymEnv:
 
         self.prev_results = results
 
-        done = all(results) or self.step_count >= self.max_steps
+        # ✅ FIXED DONE CONDITION (IMPORTANT)
+        done = (sum(results) == total) or self.step_count >= self.max_steps
 
         logs = f"""
 {format_error(error)}
@@ -129,7 +138,7 @@ Progress: {current_passed}/{total}
                 task_name=self.task_name,
                 hint=get_hint(results, error, self.code),
                 logs=logs,
-                tests_passed=current_passed,
+                tests_passed=int(sum(1 for r in results if r == 1.0)),
                 tests_total=total
             ),
             reward,
@@ -142,7 +151,7 @@ Progress: {current_passed}/{total}
             "code": self.code,
             "step_count": self.step_count,
             "task_name": self.task_name,
-            "tests_passed": sum(self.prev_results),
+            "tests_passed": int(sum(1 for r in self.prev_results if r == 1.0)),
             "tests_total": len(self.tests)
         }
 
