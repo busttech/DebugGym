@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "debuggym"
+version = "1.1.0"
+description = "CI/CD Failure Recovery Environment for AI Agents"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "openai>=1.0",
+    "fastapi",
+    "uvicorn",
+    "python-dotenv",
+    "openenv-core>=0.2.0"   # ADD THIS
+]
+
+[project.urls]
+Homepage = "https://huggingface.co/spaces/your-org/debuggym"
+Repository = "https://github.com/your-org/debuggym"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["debuggym*"]
+
+[tool.openenv]
+entry_point = "debuggym.env:DebugGymEnv"
+observation_type = "DebugObservation"
+action_type = "DebugAction"
+reward_type = "DebugReward"
+spec_version = "1.0"
+[project.scripts]
+server = "server.app:main"

@@ -1,16 +1,53 @@
 name: debuggym-env
-description: AI debugging and code reasoning environment
-version: 1.0.0
+description: >
+  DebugGym simulates CI/CD pipeline failure recovery. AI agents must diagnose
+  runtime crashes, fix broken business logic, handle malformed inputs, and recover
+  from misconfigurations — exactly what engineers face in production at 3am.
+version: 1.1.0
 
-entrypoint: debuggym.env:DebugGymEnv
+entry_point: debuggym.env:DebugGymEnv
 
 observation_type: DebugObservation
 action_type: DebugAction
 reward_type: DebugReward
 
 tasks:
-  - easy
-  - medium
-  - hard
-  - expert
-  - api_debug
+  - email_validation
+  - user_api
+  - payments
+  - config_loader
+  - nested_api
+  - json_schema_repair
+  - rate_limiter_audit
+
+difficulty_range:
+  easy: email_validation
+  medium: user_api
+  hard:
+    - payments
+    - json_schema_repair
+  expert:
+    - config_loader
+    - rate_limiter_audit
+  expert_plus: nested_api
+
+reward:
+  range: [0.0, 1.0]
+  partial_progress: true
+  signals:
+    - test_pass_rate
+    - improvement_over_previous_step
+    - efficiency_bonus
+    - reasoning_bonus
+  penalties:
+    - invalid_edits
+    - runtime_errors
+    - no_op_actions
+
+api:
+  reset: GET/POST /reset
+  reset_task: GET/POST /reset/{task_name}
+  step: POST /step
+  state: GET /state
+  tasks: GET /tasks
+  metrics: GET /metrics

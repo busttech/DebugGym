@@ -5,7 +5,8 @@ from typing import List, Optional, Literal
 class DebugObservation(BaseModel):
     code: str
     error_message: Optional[str] = None
-    test_results: List[bool]
+    test_results: List[float]   # ✅ FIXED
+
     step_count: int
     max_steps: int
     task_name: str
