@@ -1,9 +1,20 @@
-<<<<<<< HEAD
 # DebugGym: CI/CD Failure Recovery Environment 🐛⚙️
 
 > *Can an AI agent fix a broken production pipeline at 3am?*
 
-DebugGym is a **production-grade OpenEnv environment** that simulates real-world CI/CD failure recovery. Instead of solving toy problems, agents must diagnose runtime crashes, fix broken business logic, handle malformed inputs, and recover from misconfigurations — the exact scenarios engineers face under pressure.
+DebugGym is a **product---
+title: Debuggym
+emoji: ⚡
+colorFrom: green
+colorTo: yellow
+sdk: docker
+pinned: false
+license: mit
+short_description: Create a new Space Spaces are Git repositories that host app
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+ion-grade OpenEnv environment** that simulates real-world CI/CD failure recovery. Instead of solving toy problems, agents must diagnose runtime crashes, fix broken business logic, handle malformed inputs, and recover from misconfigurations — the exact scenarios engineers face under pressure.
 
 ---
 
@@ -244,17 +255,3 @@ All agent code edits are validated for syntax before execution.
 ## License
 
 MIT
-=======
----
-title: Debuggym
-emoji: ⚡
-colorFrom: green
-colorTo: yellow
-sdk: docker
-pinned: false
-license: mit
-short_description: Create a new Space Spaces are Git repositories that host app
----
-
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
->>>>>>> 196272a4f924278448c3aea20d2aa314e6d01b7a
